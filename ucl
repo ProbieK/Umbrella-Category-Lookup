@@ -1,0 +1,32 @@
+#!/bin/bash
+
+DOMAIN="$1"
+COUNTER=1
+
+
+function LOOKUP1 {
+var=$(nslookup -type=TXT "$DOMAIN".cat.opendns.com 208.67.222.222 | awk -F' = ' 'NF==2 { print $2 } ' | tail -n +2)
+}
+
+while [ "$COUNTER"  -lt 11 ]; do
+  LOOKUP1
+  if [ "$var" ]; then
+    echo "$var"
+    exit 0
+  else
+    echo "Lookup failed. Trying again in 1 second"
+    echo "Lookup $COUNTER of 10"
+    sleep 1
+    COUNTER=$(( $COUNTER + 1 ))
+  fi
+  if [ "$COUNTER" -eq 11 ]; then
+    echo "Not getting an answer"
+    echo "Domain may not be categorized. Raw output below."
+    echo "Aborting!"
+    echo "-----"
+    RAWOUTPUT=$(nslookup -type=TXT "$DOMAIN".cat.opendns.com 208.67.222.222)
+    echo -e "\033[0;31m$RAWOUTPUT\033[0m"
+    echo "-----"
+    exit 1
+  fi
+done
